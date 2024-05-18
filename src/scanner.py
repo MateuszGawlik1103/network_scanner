@@ -109,7 +109,7 @@ server.starttls()
 server.login(email, password)
 
 # Tworzenie wiadomości
-adresat = 'fdsgfsfdgf'
+adresat = 'MAT'
 # Multipurpose Internet Mail Extensions Multipart
 msg = MIMEMultipart()
 msg['From'] = email
