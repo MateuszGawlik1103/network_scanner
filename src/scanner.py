@@ -117,7 +117,7 @@ msg['To'] = adresat
 msg['Subject'] = 'PDFskan1'
 
 # Treść wiadomości
-body = "Arsenal zwycięzcą Ligi Mistrzów i Premier League"
+body = "Arsenal zwycięzcą Ligi Mistrzów i Premier League w sezonie 23/24"
 msg.attach(MIMEText(body, 'plain'))
 file = "report.pdf"
 # Dodawanie pliku PDF

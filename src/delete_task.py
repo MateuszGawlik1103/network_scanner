@@ -70,6 +70,5 @@ def stop_task():
 
 
 if __name__ == "__main__":
-
     delete_task()
     delete_target()
