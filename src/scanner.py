@@ -16,6 +16,8 @@ from pathlib import Path
 from datetime import datetime, timedelta
 import smtplib
 from base64 import b64decode
+from delete_task import delete_task, delete_target
+import os
 
 
 
@@ -93,31 +95,33 @@ def scan(target_name=None, hosts=None):
         pdf_path = Path('report.pdf').expanduser()
         # Zapis do pdf
         pdf_path.write_bytes(binary_pdf)
+        delete_task()
+        delete_target()
         print("PDF report created")
 
 
 scan()
-#Dane do logowania
-email = 'fsdgsfgdfgfd'
-password = 'rgsfdgdsgf'
-
-# Tworzenie połączenia z serwerem SMTP Onet
-server = smtplib.SMTP('smtp.poczta.interia.pl', 587)
+# Dane do logowania
+email = os.environ.get('EMAIL')
+# App password do maila
+email_pass = os.environ.get('EMAIL_PASS')
+ 
+# Tworzenie połączenia z serwerem SMTP gmail
+server = smtplib.SMTP('smtp.gmail.com', 587)
 server.starttls()
-
+ 
 # Logowanie do serwera
-server.login(email, password)
-
+server.login(email, email_pass)
+ 
 # Tworzenie wiadomości
-adresat = 'MAT'
-# Multipurpose Internet Mail Extensions Multipart
+adresat = email
 msg = MIMEMultipart()
 msg['From'] = email
 msg['To'] = adresat
-msg['Subject'] = 'PDFskan1'
-
+msg['Subject'] = 'PDFtest3'
+ 
 # Treść wiadomości
-body = "Arsenal zwycięzcą Ligi Mistrzów i Premier League w sezonie 23/24"
+body = "Arsenal winning the league"
 msg.attach(MIMEText(body, 'plain'))
 file = "report.pdf"
 # Dodawanie pliku PDF
@@ -125,13 +129,13 @@ with open(file, "rb") as attachment:
     part = MIMEApplication(attachment.read(), _subtype="pdf")
     part.add_header('Content-Disposition', 'attachment', filename=file)
     msg.attach(part)
-
+ 
 # Wysyłanie wiadomości
 server.sendmail(email, adresat, msg.as_string())
-
+ 
 # Zamykanie połączenia
 server.quit()
-
+ 
 print("Wiadomość została wysłana pomyślnie.")
 
 
