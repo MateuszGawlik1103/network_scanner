@@ -3,6 +3,6 @@
 service cron start
 crontab -l > /tmp/mycron
 
-echo "* * * * * date >> /opt/date.txt" >> /tmp/mycron
+echo "*/11 * * * * root python3 /opt/app/scanner.py" >> /tmp/mycron
 crontab /tmp/mycron
 rm /tmp/mycron
