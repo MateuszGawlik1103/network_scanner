@@ -95,7 +95,7 @@ def scan(target_name=None, hosts=None):
                 # Stworzenie polecenia (task)
                 response_task = gmp.create_task('Task1', config_id, target_id, default_scanner_id)
                 task_id = response_task.get('id')
-                log_obj.log("Task id: ", task_id, lvl.INFO)
+                log_obj.log("Task id: {task_id}", lvl.INFO)
                 pretty_print(response_task)
 
                 # Start skanu
@@ -127,7 +127,7 @@ def scan(target_name=None, hosts=None):
                 send_email(email, email_pass)
                 break
         except ConnectionRefusedError:
-            print("connection refused. Retrying after 30s...")
+            log_obj.log("connection refused. Retrying after 30s...", lvl.WARN)
             time.sleep(30)
             continue
 
