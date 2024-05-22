@@ -5,6 +5,8 @@ from gvm.xml import pretty_print
 from lxml import etree
 from gvm.protocols.gmpv208 import AlertCondition, AlertEvent, AlertMethod, ReportFormatType
 from gvm.errors import GvmError
+from logger import Logger
+from logger import Logger_levels as lvl
 from email.mime.application import MIMEApplication
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -26,23 +28,24 @@ email = os.environ.get('EMAIL')
 # App password do maila
 email_pass = os.environ.get('EMAIL_PASS')
 
+log_obj = Logger("/opt/log/app.log", False)
 
 def try_to_connect():
     while True:
         try:
             connection = TLSConnection(hostname="localhost",port=9390)
-            print("Connection established...")
+            log_obj.log("Connection established", lvl.INFO)
             return connection
         except GvmError | ConnectionRefusedError:
-            print("Connection failed. Retrying after 30s...")
+            log_obj.log("Connection failed. Retrying after 30s...", lvl.WARN)
             time.sleep(30)
 
 def authenticate(gmp):
     response = gmp.authenticate("admin", "admin")
     if response.get('status') != '200':
-        print("Authentication failed")
+        log_obj.log("Authentication failed", lvl.ERROR)
         return False
-    print("Authenticated to GVM")
+    log_obj.log("Authenticated to GVM", lvl.INFO)
     return True
 
 def scan(target_name=None, hosts=None):
@@ -64,8 +67,7 @@ def scan(target_name=None, hosts=None):
                     if scanner.xpath('name/text()')[0] == 'OpenVAS Default':
                         # Pobranie ID skanera OpenVAS Default
                         default_scanner_id = scanner.get('id')
-                print("Id of default Openvas scanner:")
-                print(default_scanner_id)
+                log_obj.log(f"Id of default Openvas scanner: {default_scanner_id}", lvl.INFO)
 
 
                 # Id konfiguracji 'Full and fast'
@@ -93,7 +95,7 @@ def scan(target_name=None, hosts=None):
                 # Stworzenie polecenia (task)
                 response_task = gmp.create_task('Task1', config_id, target_id, default_scanner_id)
                 task_id = response_task.get('id')
-                print("Task id: ", task_id)
+                log_obj.log("Task id: ", task_id, lvl.INFO)
                 pretty_print(response_task)
 
                 # Start skanu
@@ -106,7 +108,7 @@ def scan(target_name=None, hosts=None):
                     if status == 'Done':
                         task_ready = True
                     now_time = datetime.now()
-                    print(f'{now_time.strftime("%H:%M:%S")}: {status}')
+                    log_obj.log(f'{now_time.strftime("%H:%M:%S")}: {status}', lvl.INFO)
                     time.sleep(30)
                 ready_task = gmp.get_task(task_id)
                 report_id = ready_task.find(".//task").find('.//report').attrib.get("id")
@@ -121,7 +123,7 @@ def scan(target_name=None, hosts=None):
                 pdf_path.write_bytes(binary_pdf)
                 delete_task()
                 delete_target()
-                print("PDF report created")
+                log_obj.log("PDF report created", lvl.SUCCESS)
                 send_email(email, email_pass)
                 break
         except ConnectionRefusedError:
@@ -165,7 +167,7 @@ def send_email(email, email_pass):
     # Zamykanie połączenia
     server.quit()
     
-    print("Wiadomość została wysłana pomyślnie.")
+    log_obj.log("Message sent succesfully.", lvl.SUCCESS)
 
 
 if __name__ =='__main__':
