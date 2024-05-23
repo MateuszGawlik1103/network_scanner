@@ -1,6 +1,6 @@
 #!/bin/bash
 service cron start
 crontab -l > /tmp/mycron
-echo "* * * * * root python3 /opt/app/script.py >> /opt/output.txt" >> /tmp/mycron
+echo "* * * * * /usr/bin/python3 /opt/app/scanner.py" >> /tmp/mycron
 crontab /tmp/mycron
 rm /tmp/mycron
