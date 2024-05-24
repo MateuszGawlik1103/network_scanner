@@ -28,7 +28,7 @@ email = os.environ.get('EMAIL')
 # App password do maila
 email_pass = os.environ.get('EMAIL_PASS')
 
-log_obj = Logger("/opt/log/app.log", False)
+log_obj = Logger("/opt/log/app.log", True)
 
 def try_to_connect():
     while True:
@@ -142,12 +142,17 @@ def scan(target_name=None, hosts=None):
 def send_email(email, email_pass, pdf_path):
     try:
         # Tworzenie połączenia z serwerem SMTP Gmail
+        log_obj.log('1', lvl.DEBUG)
         server = smtplib.SMTP('smtp.gmail.com', 587)
+        log_obj.log('2', lvl.DEBUG)
         server.starttls()
+        log_obj.log('3', lvl.DEBUG)
 
         try:
             # Logowanie do serwera
+            log_obj.log('4', lvl.DEBUG)
             server.login(email, email_pass)
+            log_obj.log('5', lvl.DEBUG)
         except smtplib.SMTPAuthenticationError:
             log_obj.log("Authentication failed. Please check your email and password.", lvl.ERROR)
             return
@@ -156,22 +161,35 @@ def send_email(email, email_pass, pdf_path):
             return
 
         # Tworzenie wiadomości
+        log_obj.log('6', lvl.DEBUG)
         adresat = email
+        log_obj.log('7', lvl.DEBUG)
         msg = MIMEMultipart()
+        log_obj.log('8', lvl.DEBUG)
         msg['From'] = email
+        log_obj.log('9', lvl.DEBUG)
         msg['To'] = adresat
+        log_obj.log('10', lvl.DEBUG)
         msg['Subject'] = 'PDFtest'
+        log_obj.log('11', lvl.DEBUG)
 
         # Treść wiadomości
+        log_obj.log('12', lvl.DEBUG)
         body = "Arsenal winning the league (next season...)"
+        log_obj.log('13', lvl.DEBUG)
         msg.attach(MIMEText(body, 'plain'))
+        log_obj.log('14', lvl.DEBUG)
 
         try:
             # Dodawanie pliku PDF
             with open(pdf_path, "rb") as attachment:
+                log_obj.log('15', lvl.DEBUG)
                 part = MIMEApplication(attachment.read(), _subtype="pdf")
+                log_obj.log('16', lvl.DEBUG)
                 part.add_header('Content-Disposition', 'attachment', filename=pdf_path)
+                log_obj.log('17', lvl.DEBUG)
                 msg.attach(part)
+                log_obj.log('18', lvl.DEBUG)
         except FileNotFoundError:
             log_obj.log(f"The file {pdf_path} was not found.", lvl.ERROR)
             return
@@ -181,7 +199,9 @@ def send_email(email, email_pass, pdf_path):
 
         try:
             # Wysyłanie wiadomości
+            log_obj.log('19', lvl.DEBUG)
             server.sendmail(email, adresat, msg.as_string())
+            log_obj.log('20', lvl.DEBUG)
         except smtplib.SMTPRecipientsRefused:
             log_obj.log("The recipient's email address was refused.", lvl.ERROR)
         except smtplib.SMTPSenderRefused:
@@ -194,7 +214,9 @@ def send_email(email, email_pass, pdf_path):
             log_obj.log("Message sent successfully.", lvl.SUCCESS)
 
         # Zamykanie połączenia
+        log_obj.log('21', lvl.DEBUG)
         server.quit()
+        log_obj.log('22', lvl.DEBUG)
         
     except smtplib.SMTPConnectError:
         log_obj.log("Failed to connect to the SMTP server.", lvl.ERROR)
