@@ -90,7 +90,7 @@ def scan(target_name=None, hosts=None):
                     # Lista aktywnych hostow z poszczegolnych interfejsow
                     active_hosts = host_disc.get_active_hosts(inet_adress)
                     all_active_hosts.extend(active_hosts)
-                target_id = target_create.create_target("New target1", all_active_hosts)
+                target_id = target_create.create_target("New target1", all_active_hosts, gmp)
                 
                 # Stworzenie polecenia (task)
                 response_task = gmp.create_task('Task1', config_id, target_id, default_scanner_id)
@@ -121,8 +121,8 @@ def scan(target_name=None, hosts=None):
                 pdf_path = Path('report.pdf').expanduser()
                 # Zapis do pdf
                 pdf_path.write_bytes(binary_pdf)
-                delete_task()
-                delete_target()
+                delete_task(gmp)
+                delete_target(gmp)
                 log_obj.log("PDF report created", lvl.SUCCESS)
                 send_email(email, email_pass)
                 break
@@ -137,37 +137,71 @@ def scan(target_name=None, hosts=None):
 
 
 def send_email(email, email_pass):
-    # Tworzenie połączenia z serwerem SMTP gmail
-    server = smtplib.SMTP('smtp.gmail.com', 587)
-    server.starttls()
-    
-    # Logowanie do serwera
-    server.login(email, email_pass)
-    
-    # Tworzenie wiadomości
-    adresat = email
-    msg = MIMEMultipart()
-    msg['From'] = email
-    msg['To'] = adresat
-    msg['Subject'] = 'PDFtest'
-    
-    # Treść wiadomości
-    body = "Arsenal winning the league (next season...)"
-    msg.attach(MIMEText(body, 'plain'))
-    file = "report.pdf"
-    # Dodawanie pliku PDF
-    with open(file, "rb") as attachment:
-        part = MIMEApplication(attachment.read(), _subtype="pdf")
-        part.add_header('Content-Disposition', 'attachment', filename=file)
-        msg.attach(part)
-    
-    # Wysyłanie wiadomości
-    server.sendmail(email, adresat, msg.as_string())
-    
-    # Zamykanie połączenia
-    server.quit()
-    
-    log_obj.log("Message sent succesfully.", lvl.SUCCESS)
+    try:
+        # Tworzenie połączenia z serwerem SMTP Gmail
+        server = smtplib.SMTP('smtp.gmail.com', 587)
+        server.starttls()
+
+        try:
+            # Logowanie do serwera
+            server.login(email, email_pass)
+        except smtplib.SMTPAuthenticationError:
+            log_obj.log("Authentication failed. Please check your email and password.", lvl.ERROR)
+            return
+        except smtplib.SMTPException as e:
+            log_obj.log(f"An SMTP error occurred during login: {e}", lvl.ERROR)
+            return
+
+        # Tworzenie wiadomości
+        adresat = email
+        msg = MIMEMultipart()
+        msg['From'] = email
+        msg['To'] = adresat
+        msg['Subject'] = 'PDFtest'
+
+        # Treść wiadomości
+        body = "Arsenal winning the league (next season...)"
+        msg.attach(MIMEText(body, 'plain'))
+
+        file = "report.pdf"
+        try:
+            # Dodawanie pliku PDF
+            with open(file, "rb") as attachment:
+                part = MIMEApplication(attachment.read(), _subtype="pdf")
+                part.add_header('Content-Disposition', 'attachment', filename=file)
+                msg.attach(part)
+        except FileNotFoundError:
+            log_obj.log(f"The file {file} was not found.", lvl.ERROR)
+            return
+        except IOError as e:
+            log_obj.log(f"An error occurred while reading the file {file}: {e}", lvl.ERROR)
+            return
+
+        try:
+            # Wysyłanie wiadomości
+            server.sendmail(email, adresat, msg.as_string())
+        except smtplib.SMTPRecipientsRefused:
+            log_obj.log("The recipient's email address was refused.", lvl.ERROR)
+        except smtplib.SMTPSenderRefused:
+            log_obj.log("The sender's email address was refused.", lvl.ERROR)
+        except smtplib.SMTPDataError as e:
+            log_obj.log(f"SMTP data error: {e}", lvl.ERROR)
+        except smtplib.SMTPException as e:
+            log_obj.log(f"An SMTP error occurred while sending the email: {e}", lvl.ERROR)
+        else:
+            log_obj.log("Message sent successfully.", lvl.SUCCESS)
+
+        # Zamykanie połączenia
+        server.quit()
+        
+    except smtplib.SMTPConnectError:
+        log_obj.log("Failed to connect to the SMTP server.", lvl.ERROR)
+    except smtplib.SMTPServerDisconnected:
+        log_obj.log("The connection to the SMTP server was unexpectedly closed.", lvl.ERROR)
+    except smtplib.SMTPException as e:
+        log_obj.log(f"An SMTP error occurred: {e}", lvl.ERROR)
+    except Exception as e:
+        log_obj.log(f"An unexpected error occurred: {e}", lvl.ERROR)
 
 
 if __name__ =='__main__':

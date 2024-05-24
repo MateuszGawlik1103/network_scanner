@@ -2,15 +2,13 @@ from gvm.connections import TLSConnection
 from gvm.protocols.latest import Gmp
 from gvm.transforms import EtreeTransform
 from gvm.xml import pretty_print
+from logger import Logger
+from logger import Logger_levels as lvl
 
-def delete_target():
-    # Konfiguracja połączenia z GMP 
-    conn = TLSConnection(hostname="localhost", port=9390)
-    transform = EtreeTransform()
-    gmp = Gmp(connection=conn, transform=transform)
 
-    # Uwierzytelnianie
-    gmp.authenticate(username='admin', password='admin')
+log_obj = Logger("/opt/log/app.log", False)
+
+def delete_target(gmp):
 
     response_display_target = gmp.get_targets()
 
@@ -20,19 +18,15 @@ def delete_target():
 
 
     # Pobranie informacji o wszystkich zadaniach
-    response1 = gmp.delete_target(targets_id[0])
+    response1 = gmp.delete_target(targets_id[0])    
+    if response1.get('status') =='400':
+        log_obj.log("Failed to delete task",lvl.ERROR)
+        return False
+    log_obj.log(f"Target {response1.get('id')} deleted", lvl.INFO)
+    
 
-    pretty_print(response1)
 
-
-def delete_task():
-    # Konfiguracja połączenia z GMP 
-    conn = TLSConnection(hostname="localhost", port=9390)
-    transform = EtreeTransform()
-    gmp = Gmp(connection=conn, transform=transform)
-
-    # Uwierzytelnianie
-    gmp.authenticate(username='admin', password='admin')
+def delete_task(gmp):
 
     response_display_task = gmp.get_tasks()
 
@@ -47,14 +41,7 @@ def delete_task():
     pretty_print(response1)
 
 
-def stop_task():
-    # Konfiguracja połączenia z GMP 
-    conn = TLSConnection(hostname="localhost", port=9390)
-    transform = EtreeTransform()
-    gmp = Gmp(connection=conn, transform=transform)
-
-    # Uwierzytelnianie
-    gmp.authenticate(username='admin', password='admin')
+def stop_task(gmp):
 
     response_display_task = gmp.get_tasks()
 
@@ -67,8 +54,3 @@ def stop_task():
 
     pretty_print(response1)
 
-
-
-if __name__ == "__main__":
-    delete_task()
-    delete_target()
