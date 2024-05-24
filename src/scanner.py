@@ -118,13 +118,16 @@ def scan(target_name=None, hosts=None):
                 content = report_element.find("report_format").tail
                 binary_base64_encoded_pdf = content.encode('ascii')
                 binary_pdf = b64decode(binary_base64_encoded_pdf)
-                pdf_path = Path('report.pdf').expanduser()
+                timestamp = int(time.time())
+                path = f"/opt/reports/report_{timestamp}.pdf"
+                pdf_path = Path(path).expanduser()
+                log_obj.log(f"PDF path: {pdf_path}", lvl.INFO)
                 # Zapis do pdf
                 pdf_path.write_bytes(binary_pdf)
                 delete_task(gmp)
                 delete_target(gmp)
                 log_obj.log("PDF report created", lvl.SUCCESS)
-                send_email(email, email_pass)
+                send_email(email, email_pass, pdf_path)
                 break
         except ConnectionRefusedError:
             log_obj.log("connection refused. Retrying after 30s...", lvl.WARN)
@@ -136,7 +139,7 @@ def scan(target_name=None, hosts=None):
 
 
 
-def send_email(email, email_pass):
+def send_email(email, email_pass, pdf_path):
     try:
         # Tworzenie połączenia z serwerem SMTP Gmail
         server = smtplib.SMTP('smtp.gmail.com', 587)
@@ -163,18 +166,17 @@ def send_email(email, email_pass):
         body = "Arsenal winning the league (next season...)"
         msg.attach(MIMEText(body, 'plain'))
 
-        file = "report.pdf"
         try:
             # Dodawanie pliku PDF
-            with open(file, "rb") as attachment:
+            with open(pdf_path, "rb") as attachment:
                 part = MIMEApplication(attachment.read(), _subtype="pdf")
-                part.add_header('Content-Disposition', 'attachment', filename=file)
+                part.add_header('Content-Disposition', 'attachment', filename=pdf_path)
                 msg.attach(part)
         except FileNotFoundError:
-            log_obj.log(f"The file {file} was not found.", lvl.ERROR)
+            log_obj.log(f"The file {pdf_path} was not found.", lvl.ERROR)
             return
         except IOError as e:
-            log_obj.log(f"An error occurred while reading the file {file}: {e}", lvl.ERROR)
+            log_obj.log(f"An error occurred while reading the file {pdf_path}: {e}", lvl.ERROR)
             return
 
         try:
