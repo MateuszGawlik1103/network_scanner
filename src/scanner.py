@@ -127,7 +127,7 @@ def scan(target_name=None, hosts=None):
                 delete_task(gmp)
                 delete_target(gmp)
                 log_obj.log("PDF report created", lvl.SUCCESS)
-                send_email(email, email_pass, pdf_path)
+                send_email(email, email_pass, path)
                 break
         except ConnectionRefusedError:
             log_obj.log("connection refused. Retrying after 30s...", lvl.WARN)
