@@ -150,7 +150,7 @@ def send_email(email, email_pass, pdf_path):
 
         try:
             # Logowanie do serwera
-            log_obj.log('4', lvl.DEBUG)
+            log_obj.log(f'4 {email}, {email_pass}', lvl.DEBUG)
             server.login(email, email_pass)
             log_obj.log('5', lvl.DEBUG)
         except smtplib.SMTPAuthenticationError:
