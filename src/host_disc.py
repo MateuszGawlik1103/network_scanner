@@ -1,4 +1,4 @@
-import nmap
+#import nmap
 import ipaddress
 
 
@@ -15,12 +15,12 @@ def get_inet_addresses(host_ip):
     subnet_mask = int(mask)
     
     # Utwórz adres sieci
-    network_address = ipaddress.IPv4Network(f"{ip}/{mask}", strict=False).network_address
+    network_address = ipaddress.IPv4Network(f"{ip}/{mask}", strict=False)
     
     return network_address
 
 # Przykładowe użycie
-
+print(get_inet_addresses("192.168.43.224/24"))
 
 # Zwraca liste aktywnych hostow w danej sieci
 def get_active_hosts(ip):
