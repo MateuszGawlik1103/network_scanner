@@ -38,7 +38,7 @@ IP=$(ip addr show eth0 | grep -oP 'inet \K[\d.]+/\d{2}')
 echo -e "\e[0;36m[*]\e[m Pulling ghcr.io/mateuszgawlik1103/net-scanner-ghcr:latest..."
 docker pull ghcr.io/mateuszgawlik1103/net-scanner-ghcr:latest
 
-
+echo -e "Host ip address: {$IP}"
 echo -e "\e[0;36m[*]\e[m Running the container in detached mode..."
 docker run --detach --publish 8090:9392 -e SKIPSYNC=true -e IP=$IP -e FREQUENCY=$FREQUENCY -e SENDER_PASS="$EMAIL_PASS" -e EMAIL=$EMAIL --name scanner ghcr.io/mateuszgawlik1103/net-scanner-ghcr:latest
 docker exec scanner /bin/bash /opt/app/config/setup_cron.sh
