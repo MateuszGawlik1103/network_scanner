@@ -87,9 +87,10 @@ def scan(target_name=None, hosts=None):
                 # Pobranie sieci z interfejsow
                 inet_address = host_disc.get_inet_addresses(host_ip)
                 # Lista aktywnych hostow ze wszystkich interfejsow
+                all_active_hosts = []
                 active_hosts = host_disc.get_active_hosts(inet_address)
-                target_id = target_create.create_target("New target1", active_hosts, gmp)
-                
+                all_active_hosts.extend(active_hosts)
+                target_id = target_create.create_target("New target1", all_active_hosts, gmp)
                 # Stworzenie polecenia (task)
                 response_task = gmp.create_task('Task1', config_id, target_id, default_scanner_id)
                 task_id = response_task.get('id')
