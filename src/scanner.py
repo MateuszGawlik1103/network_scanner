@@ -109,8 +109,10 @@ def scan(target_name=None, hosts=None):
                     if status == 'Interrupted':
                         interrupted += 1
                         if interrupted == 3:
-                            gmp.stop_task(task_id)
-                            gmp.resume_task(task_id)
+                            print(task_id)
+                            gmp.stop_task(task_id=task_id)
+                            time.sleep(5)
+                            gmp.resume_task(task_id=task_id)
                     if status == 'Done':
                         task_ready = True
                     now_time = datetime.now()
