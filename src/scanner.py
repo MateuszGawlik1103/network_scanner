@@ -101,9 +101,16 @@ def scan(target_name=None, hosts=None):
                 gmp.start_task(task_id=task_id)
                 task_ready = False
                 # Sprawdzenie, czy skan gotowy
+                interrupted = 0
                 while not task_ready:
                     got_task = gmp.get_task(task_id)
                     status = got_task.find(".//status").text
+                    
+                    if status == 'Interrupted':
+                        interrupted += 1
+                        if interrupted == 3:
+                            gmp.stop_task(task_id)
+                            gmp.resume_task(task_id)
                     if status == 'Done':
                         task_ready = True
                     now_time = datetime.now()
