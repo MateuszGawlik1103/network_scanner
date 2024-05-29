@@ -22,10 +22,9 @@ from base64 import b64decode
 from delete_task import delete_task, delete_target
 import os
 
-
-# Dane do logowania
+# Login data
 email = os.environ.get('EMAIL')
-# App password do maila
+# App password for email
 email_pass = os.environ.get('EMAIL_PASS')
 
 host_ip = os.environ.get('IP')
@@ -35,7 +34,7 @@ log_obj = Logger("/opt/log/app.log", True)
 def try_to_connect():
     while True:
         try:
-            connection = TLSConnection(hostname="localhost",port=9390)
+            connection = TLSConnection(hostname="localhost", port=9390)
             log_obj.log("Connection established", lvl.INFO)
             return connection
         except GvmError | ConnectionRefusedError:
@@ -51,56 +50,53 @@ def authenticate(gmp):
     return True
 
 def scan(target_name=None, hosts=None):
-    # Połączenie z gvmd przez socket Unix
+    # Connect to gvmd via Unix socket
     connection = try_to_connect()
     transform = EtreeTransform()
-    # Utworzenie obiektu protokołu GMP
+    # Create GMP protocol object
     
     while True:
         try:
             with Gmp(connection=connection, transform=transform) as gmp:  
                 authenticate(gmp)
                 response = gmp.get_scanners()
-                # Pobranie informacji o skanerach
+                # Retrieve scanner information
                 scanners_info = response.xpath('.//scanner')
-                # Pobranie nazw skanerów
+                # Retrieve scanner names
                 scanner_names = [scanner.xpath('name/text()')[0] for scanner in scanners_info]
                 for scanner in scanners_info:
                     if scanner.xpath('name/text()')[0] == 'OpenVAS Default':
-                        # Pobranie ID skanera OpenVAS Default
+                        # Retrieve the ID of the OpenVAS Default scanner
                         default_scanner_id = scanner.get('id')
-                log_obj.log(f"Id of default Openvas scanner: {default_scanner_id}", lvl.INFO)
+                log_obj.log(f"ID of default OpenVAS scanner: {default_scanner_id}", lvl.INFO)
 
-
-                # Id konfiguracji 'Full and fast'
+                # ID of 'Full and fast' configuration
                 config_response = gmp.get_scan_configs()
-                # Pobranie informacji o konfiguracji skanowania
+                # Retrieve scan configuration information
                 configs_info = config_response.xpath('.//config')
                 for config in configs_info:
                     if config.xpath('name/text()')[0] == 'Full and fast':
-                        # Pobranie ID konfiguracji skanowania 'Full and fast'
+                        # Retrieve the ID of the 'Full and fast' scan configuration
                         config_id = config.get('id')
 
-
-
-                # Stworzenie celu
-                # Pobranie sieci z interfejsow
+                # Create target
+                # Retrieve network from interfaces
                 inet_address = host_disc.get_inet_addresses(host_ip)
-                # Lista aktywnych hostow ze wszystkich interfejsow
+                # List of active hosts from all interfaces
                 all_active_hosts = []
                 active_hosts = host_disc.get_active_hosts(inet_address)
                 all_active_hosts.extend(active_hosts)
                 target_id = target_create.create_target("New target1", all_active_hosts, gmp)
-                # Stworzenie polecenia (task)
+                # Create task
                 response_task = gmp.create_task('Task1', config_id, target_id, default_scanner_id)
                 task_id = response_task.get('id')
-                log_obj.log(f"Task id: {task_id}", lvl.INFO)
+                log_obj.log(f"Task ID: {task_id}", lvl.INFO)
                 pretty_print(response_task)
 
-                # Start skanu
+                # Start scan
                 gmp.start_task(task_id=task_id)
                 task_ready = False
-                # Sprawdzenie, czy skan gotowy
+                # Check if scan is ready
                 interrupted = 0
                 while not task_ready:
                     got_task = gmp.get_task(task_id)
@@ -130,7 +126,7 @@ def scan(target_name=None, hosts=None):
                 path = f"/opt/reports/report_{timestamp}.pdf"
                 pdf_path = Path(path).expanduser()
                 log_obj.log(f"PDF path: {pdf_path}", lvl.INFO)
-                # Zapis do pdf
+                # Save to pdf
                 pdf_path.write_bytes(binary_pdf)
                 delete_task(gmp)
                 delete_target(gmp)
@@ -138,29 +134,19 @@ def scan(target_name=None, hosts=None):
                 send_email(email, email_pass, path)
                 break
         except ConnectionRefusedError:
-            log_obj.log("connection refused. Retrying after 30s...", lvl.WARN)
+            log_obj.log("Connection refused. Retrying after 30s...", lvl.WARN)
             time.sleep(30)
             continue
 
-    
-
-
-
-
 def send_email(email, email_pass, pdf_path):
     try:
-        # Tworzenie połączenia z serwerem SMTP Gmail
-        log_obj.log('1', lvl.DEBUG)
+        # Create connection to Gmail SMTP server
         server = smtplib.SMTP('smtp.gmail.com', 587)
-        log_obj.log('2', lvl.DEBUG)
         server.starttls()
-        log_obj.log('3', lvl.DEBUG)
 
         try:
-            # Logowanie do serwera
-            log_obj.log(f'4 {email}, {email_pass}', lvl.DEBUG)
+            # Log in to the server
             server.login(email, email_pass)
-            log_obj.log('5', lvl.DEBUG)
         except smtplib.SMTPAuthenticationError:
             log_obj.log("Authentication failed. Please check your email and password.", lvl.ERROR)
             return
@@ -168,36 +154,23 @@ def send_email(email, email_pass, pdf_path):
             log_obj.log(f"An SMTP error occurred during login: {e}", lvl.ERROR)
             return
 
-        # Tworzenie wiadomości
-        log_obj.log('6', lvl.DEBUG)
-        adresat = email
-        log_obj.log('7', lvl.DEBUG)
+        # Create the message
+        recipient = email
         msg = MIMEMultipart()
-        log_obj.log('8', lvl.DEBUG)
         msg['From'] = email
-        log_obj.log('9', lvl.DEBUG)
-        msg['To'] = adresat
-        log_obj.log('10', lvl.DEBUG)
-        msg['Subject'] = 'PDFtest'
-        log_obj.log('11', lvl.DEBUG)
+        msg['To'] = recipient
+        msg['Subject'] = 'PDF Test'
 
-        # Treść wiadomości
-        log_obj.log('12', lvl.DEBUG)
-        body = "Arsenal winning the league (next season...)"
-        log_obj.log('13', lvl.DEBUG)
+        # Message body
+        body = f"Network {host_ip} scan report"
         msg.attach(MIMEText(body, 'plain'))
-        log_obj.log('14', lvl.DEBUG)
 
         try:
-            # Dodawanie pliku PDF
+            # Add PDF file
             with open(pdf_path, "rb") as attachment:
-                log_obj.log('15', lvl.DEBUG)
                 part = MIMEApplication(attachment.read(), _subtype="pdf")
-                log_obj.log('16', lvl.DEBUG)
                 part.add_header('Content-Disposition', 'attachment', filename=pdf_path)
-                log_obj.log('17', lvl.DEBUG)
                 msg.attach(part)
-                log_obj.log('18', lvl.DEBUG)
         except FileNotFoundError:
             log_obj.log(f"The file {pdf_path} was not found.", lvl.ERROR)
             return
@@ -206,10 +179,8 @@ def send_email(email, email_pass, pdf_path):
             return
 
         try:
-            # Wysyłanie wiadomości
-            log_obj.log('19', lvl.DEBUG)
-            server.sendmail(email, adresat, msg.as_string())
-            log_obj.log('20', lvl.DEBUG)
+            # Send the message
+            server.sendmail(email, recipient, msg.as_string())
         except smtplib.SMTPRecipientsRefused:
             log_obj.log("The recipient's email address was refused.", lvl.ERROR)
         except smtplib.SMTPSenderRefused:
@@ -221,10 +192,8 @@ def send_email(email, email_pass, pdf_path):
         else:
             log_obj.log("Message sent successfully.", lvl.SUCCESS)
 
-        # Zamykanie połączenia
-        log_obj.log('21', lvl.DEBUG)
+        # Close the connection
         server.quit()
-        log_obj.log('22', lvl.DEBUG)
         
     except smtplib.SMTPConnectError:
         log_obj.log("Failed to connect to the SMTP server.", lvl.ERROR)
@@ -235,14 +204,5 @@ def send_email(email, email_pass, pdf_path):
     except Exception as e:
         log_obj.log(f"An unexpected error occurred: {e}", lvl.ERROR)
 
-
-if __name__ =='__main__':
+if __name__ == '__main__':
     scan()
-
-
-
-
-
-
-
-    

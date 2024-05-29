@@ -16,8 +16,6 @@ def delete_target(gmp):
     targets_id = [target.get('id') for target in target_info]
 
 
-
-    # Pobranie informacji o wszystkich zadaniach
     response1 = gmp.delete_target(targets_id[0])    
     if response1.get('status') =='400':
         log_obj.log("Failed to delete task",lvl.ERROR)
@@ -33,9 +31,6 @@ def delete_task(gmp):
     task_info = response_display_task.xpath('.//task')
     tasks_id = [task.get('id') for task in task_info]
 
-
-
-    # Pobranie informacji o wszystkich zadaniach
     response1 = gmp.delete_task(tasks_id[0])
 
     pretty_print(response1)
@@ -48,8 +43,6 @@ def stop_task(gmp):
     task_info = response_display_task.xpath('.//task')
     tasks_id = [task.get('id') for task in task_info]
 
-
-    # Pobranie informacji o wszystkich zadaniach
     response1 = gmp.stop_task(tasks_id[0])
 
     pretty_print(response1)

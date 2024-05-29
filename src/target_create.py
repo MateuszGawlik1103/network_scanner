@@ -6,9 +6,9 @@ from logger import Logger
 from logger import Logger_levels as lvl
 
 log_obj = Logger("/opt/log/app.log", False)
-# Zwraca target_id
+# Return target id
 def create_target(target_name, hosts, gmp):
-    # Utworzenie celu
+    # Create target
     response = gmp.create_target(name=target_name, hosts=hosts, port_range="80-443")
     target_id = response.get('id')
     log_obj.log(f"New target created: {target_id}", lvl.INFO)

@@ -1,42 +1,37 @@
 import nmap
 import ipaddress
 
-
-import ipaddress
-
 def get_inet_addresses(host_ip):
-    # Podziel adres IP i maskę podsieci
+    # Split the IP address and subnet mask
     ip, mask = host_ip.split('/')
     
-    # Utwórz obiekt adresu IP
+    # Create an IP address object
     ip_address = ipaddress.IPv4Address(ip)
     
-    # Utwórz obiekt maski podsieci
+    # Create a subnet mask object
     subnet_mask = int(mask)
     
-    # Utwórz adres sieci
+    # Create a network address
     network_address = ipaddress.IPv4Network(f"{ip}/{mask}", strict=False)
     
     return network_address
 
-# Przykładowe użycie
+# Example usage
 #print(get_inet_addresses("192.168.43.224/24"))
 
-# Zwraca liste aktywnych hostow w danej sieci
+# Returns a list of active hosts in the given network
 def get_active_hosts(ip):
     ip_net = str(ip)
     active_hosts = []
 
-    # Utworz obiekt skanera Nmap
+    # Create a Nmap scanner object
     nm = nmap.PortScanner()
 
-    # Skanuj podsiec w poszukiwaniu aktywnych hostow
+    # Scan the subnet for active hosts
     nm.scan(hosts=ip_net, arguments='-sn')
 
-    # Iteruj przez wyniki skanowania
+    # Iterate through the scan results
     for host in nm.all_hosts():
         active_hosts.append(host)
 
     return active_hosts
-
-
